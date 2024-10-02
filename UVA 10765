@@ -1,88 +1,60 @@
 import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
     
-public class Main{
-    
-    
-        private static ArrayList<tupla> palomasQueNecesitoSiBombardeoEstacionI;
+public class Main {
         private static int cantidadBombas;
-        private static int[] disc;
+        private static int[] tiempoDescubrimiento;
         private static int[] low; 
         private static int[] padre;
         private static int time = 0;
-        private static Boolean[] visitados;
         private static int[] hijos;
         private static LinkedList<Integer>[] adjList;
         private static StringBuilder respuesta = new StringBuilder();
-        private static ArrayList<Integer> AP;
+        private static ArrayList<Integer> puntosArticulacion;
     
-
-
-    
-        // public static void opcionesABombardear(){
-        //     for (int i = 0; i < adjList.length; i++) {
-        //         palomasQueNecesitoSiBombardeoEstacionI.add(new tupla(i, DFS(adjList, i)));
-        //     }
-        //     comparadorTuplas porSnd = new comparadorTuplas();
-        //     Collections.sort(palomasQueNecesitoSiBombardeoEstacionI, porSnd);
-        //     for (int i = 0; i < cantidadBombas; i++) {
-        //         respuesta.append(palomasQueNecesitoSiBombardeoEstacionI.get(i).toString() + "\n");
-        //     }
-        // }
-
-
-
-
-
-    
-    //Falta hacer para que te de todo en orden que piden.
-    
-    
-    
+        //Implemento algoritmo de Tarjan para contar cc.
+        //Antes usé el siguiente enfoque y no cumplía con el tiempo pedido. Lo que hacía era por cada vértice marcarlo como visitado y hacer DFS. Cuando salía de la recursión solo visitaba los nodos que eran parte de la Componente Conexa (cc)
+        //Si ya lo había visitado no entraba, pero sino volvía a correr DFS en esa cc. Así con cada nodo.
+        //Luego investigué y resulta que Tarjan descubrió como hacerlo en O(V + E) en vez del O(V*(V + E)) que me tomaba. Se ve que el ejercicio apunta a que se resuelva de esa manera sino no pasa por tiempo.
+        //Al algortimo le hice unas adaptaciones: Llevar trackeo del padre de cada nodo, así si un nodo es raíz y tiene un hijo cuento como que no es cc. Además de llevar trackeo de la cantidad de hijos de cada nodo.
         private static int DFSAP(int nodoActual, int previo){
             low[nodoActual] = ++time;
-            disc[nodoActual] = time;
+            tiempoDescubrimiento[nodoActual] = time;
             for (Integer nodo : adjList[nodoActual]) {
-                if (nodo == previo){
-                    continue;
-                }
-                if(disc[nodo] == -1){
+            if (nodo != previo){
+                if(tiempoDescubrimiento[nodo] == -1){
                     hijos[nodoActual] += 1;
                     padre[nodo] = nodoActual;
                     DFSAP(nodo, nodoActual);
-                    if (disc[nodoActual] <= low[nodo] && padre[nodoActual] != -1){
-                        AP.set(nodoActual, AP.get(nodoActual) + 1);        
+                    if (tiempoDescubrimiento[nodoActual] <= low[nodo] && padre[nodoActual] != -1){
+                        puntosArticulacion.set(nodoActual, puntosArticulacion.get(nodoActual) + 1);        
                     }
                 low[nodoActual] = Math.min(low[nodoActual], low[nodo]);
                 }
                 else{
-                    low[nodoActual] = Math.min(low[nodoActual], disc[nodo]);
+                    low[nodoActual] = Math.min(low[nodoActual], tiempoDescubrimiento[nodo]);
                 }
             }
+        }
         return hijos[nodoActual];
-    }
+        }
 
         private static void DFS(LinkedList[] adjList){
             for (int i = 0; i < adjList.length; i++){
-                if (disc[i] == -1){
+                if (tiempoDescubrimiento[i] == -1){
                     int comp = DFSAP(i, i) - 1;
                     if (comp > 0) {
-                        AP.set(i, comp);
+                        puntosArticulacion.set(i, comp);
                     }
-                        
                 }
             }
             ArrayList<tupla> piggeonValue = new ArrayList<tupla>();
-            for (int i = 0; i < AP.size(); i++) {
-                piggeonValue.add(new tupla(i, AP.get(i) + 1));
+            for (int i = 0; i < puntosArticulacion.size(); i++) {
+                piggeonValue.add(new tupla(i, puntosArticulacion.get(i) + 1));
             }
             ComparadorTuplas comparadorPorSnd = new ComparadorTuplas();
             piggeonValue.sort(comparadorPorSnd);
@@ -91,9 +63,6 @@ public class Main{
             }
         }  
         public static void procesarEntrada() throws IOException{
-            // System.setIn(new FileInputStream("test.txt")); 
-            // PrintStream salida = new PrintStream(new FileOutputStream("results.txt"));
-            // System.setOut(salida);
             BufferedReader scan = new BufferedReader(new InputStreamReader(System.in));
                 String[] entrada = scan.readLine().split(" ");
                 while (Integer.valueOf(entrada[0]) != 0 && Integer.valueOf(entrada[1]) != 0) {
@@ -107,9 +76,7 @@ public class Main{
                             adjList[Integer.parseInt(entrada[1])].add(Integer.parseInt(entrada[0]));
                         }     
                     }
-                   // }
                     entrada = scan.readLine().split(" ");
-                    //Llamada a programa va acá
                     DFS(adjList);
                     System.out.println(respuesta);
                     respuesta.delete(0, respuesta.length());
@@ -118,28 +85,23 @@ public class Main{
             }
 
         private static void inicializarArraysData(int nroEstaciones) {
-            disc = new int[nroEstaciones];
+            tiempoDescubrimiento = new int[nroEstaciones];
             low = new int[nroEstaciones]; 
             padre = new int[nroEstaciones];
-            visitados = new Boolean[nroEstaciones] ;
             hijos = new int[nroEstaciones];
             adjList =  new LinkedList[nroEstaciones];
-            AP = new ArrayList<Integer>(nroEstaciones);
+            puntosArticulacion = new ArrayList<Integer>(nroEstaciones);
             for (int i = 0; i < nroEstaciones; i++) {
                 adjList[i] = new LinkedList<>();
-                visitados[i] = false;
-                disc[i] = -1;
+                tiempoDescubrimiento[i] = -1;
                 padre[i] = -1;
-                AP.add(0);
+                puntosArticulacion.add(0);
             }
-
-
         }
 
         public static void main(String[] args) throws IOException {
             procesarEntrada();
         }
-    
     }
 class tupla{
         private int fst;
@@ -173,3 +135,4 @@ class ComparadorTuplas implements Comparator<tupla>{
         //Retorna -1 si o2 < o1, 0 si o2 == o1, 1 si o2 > o1
     }
 }
+
