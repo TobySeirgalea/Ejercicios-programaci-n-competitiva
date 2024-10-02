@@ -1,0 +1,116 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+public class Main {
+    private static int[][] memoria;
+    private static int[][] memoria2;
+    
+
+    public static int maximo(int a, int b){
+        return (a > b) ? a : b;
+    }
+
+
+    private static void inicializarMemoria(int largo, int ancho) {
+        memoria = new int[largo][ancho];
+        memoria2 = new int[largo][ancho];
+        // for (int i = 0; i < largo; i++){
+        //     for (int j = 0; j < ancho; j++){
+        //         memoria[i][j] = -1;
+        //     }
+        // }
+    }
+
+
+    public static int crecienteMasAncha(int[] alturas, int[] ancho, int indiceActual, int indicePrevio){
+        if (indiceActual == alturas.length){
+            return 0; 
+        }
+        if (memoria[indiceActual][indicePrevio+1] != 0){
+            return memoria[indiceActual][indicePrevio+1];
+        }
+        int metelo = 0;
+        if(indicePrevio == -1 || alturas[indiceActual] > alturas[indicePrevio]){
+            metelo = ancho[indiceActual] + crecienteMasAncha(alturas, ancho, indiceActual+1, indiceActual);
+        }
+        int noMetas = crecienteMasAncha(alturas, ancho, indiceActual + 1, indicePrevio);
+    
+        memoria[indiceActual][indicePrevio+1] = maximo(noMetas, metelo);
+
+        return memoria[indiceActual][indicePrevio+1];
+    }
+    
+    public static int decrecienteMasAncha(int[] alturas, int[] ancho, int indiceActual, int indicePrevio){
+        if (indiceActual == alturas.length){
+            return 0;
+        }
+        if (memoria2[indiceActual][indicePrevio+1] != 0){
+            return memoria2[indiceActual][indicePrevio+1];
+        }
+        
+        int metelo = 0;
+        if(indicePrevio == -1 || alturas[indiceActual] < alturas[indicePrevio]){
+            metelo = ancho[indiceActual] + decrecienteMasAncha(alturas, ancho, indiceActual+1, indiceActual);
+        }
+        int noMetas = decrecienteMasAncha(alturas, ancho, indiceActual + 1, indicePrevio);
+        //La parte de agregar a memoria no debe estar dentro de ningun if, antes la metí en el if de arriba con y en la misma asignación calculaba el maximo entre las dos llamadas pero eso hace que solo explore la rama de no agregar cuando puede agregar y no siempre que es cuando debería
+        memoria2[indiceActual][indicePrevio+1] = maximo(noMetas, metelo); 
+
+        return memoria2[indiceActual][indicePrevio+1];
+    }
+
+    public static void procesarEntrada() throws IOException{
+        // Scanner escaner = new Scanner(System.in);
+        BufferedReader scan = new BufferedReader(new InputStreamReader(System.in));
+        // int cantidadTest = escaner.nextInt();
+        int cantidadTest = Integer.parseInt(scan.readLine());
+        int cantidadEdificiostestActual = 0;
+        // ArrayList<Integer> alturas;
+        // ArrayList<Integer> anchos;
+        String salida = "";
+        for (int i = 1; i <= cantidadTest; i++){
+            // cantidadEdificiostestActual = escaner.nextInt();
+            cantidadEdificiostestActual = Integer.parseInt(scan.readLine());
+            // escaner.nextLine();
+            
+            int[] alturas = new int[(cantidadEdificiostestActual)];
+            int[] anchos = new int[(cantidadEdificiostestActual + 1)];
+            alturas = convertirAarray(/*escaner.nextLine()*/scan.readLine().split(" "), alturas);
+            anchos = convertirAarray(/*escaner.nextLine()*/scan.readLine().split(" "), anchos);
+            inicializarMemoria(cantidadEdificiostestActual, cantidadEdificiostestActual +1);
+            int increasing = crecienteMasAncha(alturas, anchos, 0, -1);
+            // inicializarMemoria(cantidadEdificiostestActual, cantidadEdificiostestActual +1);
+            int decreasing = decrecienteMasAncha(alturas, anchos,0 , -1); // secuenciaMasLargaYAnchaDecreciente(alturas, anchos, 0, 0, alturas.size()-1);
+            if (increasing >= decreasing){
+                salida += "Case " + i + ". Increasing (" + increasing + "). Decreasing (" + decreasing + ").";
+            }
+            else{
+                salida += "Case " + i + ". Decreasing (" + decreasing + "). Increasing (" + increasing + ").";
+            }
+            if (i < cantidadTest){
+                salida += "\n";
+            }
+            alturas = null;
+            anchos = null;
+
+        }
+        System.out.println(salida);
+    }
+    
+    public static int[] convertirAarray(String[] texto, int[] array){
+        for (int i = 0; i < texto.length; i++){
+            array[i] = Integer.valueOf(texto[i]);
+        }
+        return array;        
+    }
+
+    public static void main(String[] args) throws IOException {
+        procesarEntrada();
+    }
+
+
+    
+}
