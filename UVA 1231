@@ -1,0 +1,96 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+
+public class Main {
+    private static int cantidadArboles;
+    private static int alturaArboles;
+    private static int perdidaPorVuelo;
+    private static int[/*Arbol*/][/*Altura*/] matrizBellotas;
+    private static int[/*Arbol*/][/*Altura*/] memo;
+    
+
+
+//Status: Intentaré sacar el 3loop interno guardando en una variable el maximo de los que puedo venir volando
+    public static int calcularMaximoBellotas(){
+        int[] mejorVenirVolando = new int[alturaArboles + 1];
+        for (int j = 0; j < cantidadArboles; j++){
+            memo[j][0] = 0;
+        }
+        for (int i = 1; i < alturaArboles + 1; i++) { //Recorro todas las alturas
+            for (int j = 0; j < cantidadArboles; j++) { //Lleno todos los árboles
+                int mejorDeLosQuePudeVenirVolando = 0;
+                if (i >= perdidaPorVuelo){//Estoy en fila desde la que todavía no se pudo haber volado antes 
+                    mejorDeLosQuePudeVenirVolando = mejorVenirVolando[i - perdidaPorVuelo];
+                    mejorDeLosQuePudeVenirVolando += matrizBellotas[j][i];
+                }
+                int mejorDeHaberEstadoAca = memo[j][i-1] + matrizBellotas[j][i];
+                
+                
+                mejorVenirVolando[i] = Math.max(mejorVenirVolando[i] , Math.max(mejorDeLosQuePudeVenirVolando, mejorDeHaberEstadoAca)); 
+                
+                memo[j][i] = Math.max(mejorDeLosQuePudeVenirVolando, mejorDeHaberEstadoAca);
+            }
+        }
+        int mejor = -1;
+        for (int i = 0; i < cantidadArboles; i++) {
+            mejor = Math.max(mejor, memo[i][alturaArboles]);
+        }
+        return mejor;
+    }
+
+//MatrizBellotas[arbol][altura]
+//Memo[arbol][altura]
+
+    public static void procesarEntrada() throws IOException{
+        BufferedReader scaner = new BufferedReader(new InputStreamReader(System.in));
+        int nroDataSets = Integer.parseInt(scaner.readLine());
+        StringBuilder respuestai = new StringBuilder();
+        for (int j = 0; j < nroDataSets; j++){
+            String[] dataConstantesProblema = scaner.readLine().split(" ");
+            cantidadArboles = Integer.parseInt(dataConstantesProblema[0]);
+            alturaArboles = Integer.parseInt(dataConstantesProblema[1]);
+            perdidaPorVuelo = Integer.parseInt(dataConstantesProblema[2]);
+            matrizBellotas = new int[cantidadArboles][alturaArboles + 1];
+            for (int i = 0; i < cantidadArboles; i++){
+                String[] stringDataArboli = scaner.readLine().split(" ");
+                int[] arrayDataArboli = stringToArray(stringDataArboli, alturaArboles);
+                matrizBellotas[i] = arrayDataArboli;
+            }
+            memo = null;
+            inicializarMemo(cantidadArboles, alturaArboles + 1);
+            int rta = calcularMaximoBellotas(); //El segundo argumento es indistinto porque igualmente busca todas las opciones
+            if (j == nroDataSets - 1){
+                respuestai.append(rta);
+                }
+            else{
+                respuestai.append(rta + "\n");
+                }
+            } 
+        System.out.println(respuestai);
+        scaner.close();
+    } 
+
+
+    private static void inicializarMemo(int filas, int cols) {
+        memo = new int[filas][cols];
+    }
+
+
+    private static int[] stringToArray(String[] stringDataArboli, int alturaArboles) {
+        int[] arrayConDatos = new int[alturaArboles + 1];
+            for (int i = 1; i < stringDataArboli.length; i++) { //Me estoy salteando el primero. No me interesa saber cuantas bellotas hay en ese arbol
+                arrayConDatos[Integer.parseInt(stringDataArboli[i])] += 1;
+            }
+        return arrayConDatos;
+    }
+
+
+
+
+    public static void main(String[] args) throws IOException {
+        procesarEntrada();  
+    }
+
+}
