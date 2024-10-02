@@ -1,9 +1,6 @@
 import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +35,7 @@ public class Main{
             if (esFinal(estadoActual, nodoFinal)) { //Si es estado objetivo -> sali
                 return estadoActual;
             }
+            //Los test priorizan que primero se realicen los movimientos antes que prender las luces
             for (int i = 0 ; i < estadoActual.getEstadoLuces().length; i++){
 
                 if (estadoActual.getEstadoLuces()[i] == true && listaAdyacenciaPuertas[estadoActual.getNumeroHabitacion()].contains(i) && i != estadoActual.getNumeroHabitacion()) {//Luz prendida y hay puerta
@@ -49,8 +47,6 @@ public class Main{
                         acciones.put(transicion, "- Move to room " + (i + 1)+".");
                     }
                 }
-                
-                
             }
             for (int i = 0 ; i < estadoActual.getEstadoLuces().length; i++){
                 if (estadoActual.getEstadoLuces()[i] == true && i != estadoActual.getNumeroHabitacion() && listaAdyacenciaInterruptores[estadoActual.getNumeroHabitacion()].contains(i) ) {//Luz prendida, no es la actual, y la puedo apagar
@@ -84,6 +80,7 @@ public class Main{
                                                                                  -Si no está prendida la luz y la puedo prender -> la prendo && agrego ese estado nuevo a cola
                                                                                  -Si puedo apagar una luz desde está posición -> la apago && agrego ese estado nuevo a cola
     */
+    
     private static boolean esFinal(Dupla estadoActual, int dormitorio) {
         // TODO Auto-generated method stub
         Boolean res = true;
