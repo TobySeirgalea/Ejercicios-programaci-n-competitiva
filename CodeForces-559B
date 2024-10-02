@@ -1,0 +1,42 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class equivalentStrings {
+
+    public static void procesarEntrada() throws IOException {
+        BufferedReader scaner = new BufferedReader(new InputStreamReader(System.in));
+        if (equivalentStrings(scaner.readLine(), scaner.readLine()) == true){
+            System.out.println("YES");
+        }
+        else{
+            System.out.println("NO");
+        }
+
+    }
+
+    private static Boolean equivalentStrings(String primerString, String segundoString) {
+        
+        if (primerString.length() != segundoString.length() ){
+            return false;
+        }
+        if (primerString.length() % 2 != 0){
+            return primerString.equals(segundoString);
+        }
+        if (primerString.equals(segundoString)){
+            return true;
+        }
+        
+        String parteA1 = primerString.substring(0, primerString.length()/2) ;
+        String parteA2 = primerString.substring(primerString.length()/2, primerString.length());
+        String parteB1 = segundoString.substring(0, segundoString.length()/2);
+        String parteB2 = segundoString.substring(segundoString.length()/2, segundoString.length());
+        Boolean res = (equivalentStrings(parteA2, parteB1) && equivalentStrings(parteA1, parteB2)) || (equivalentStrings(parteA1, parteB1) && equivalentStrings(parteA2, parteB2));         
+        return res;
+    }
+    public static void main(String[] args) throws IOException {
+        procesarEntrada();
+        
+    }
+}
+
