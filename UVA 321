@@ -1,0 +1,296 @@
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class Main{
+    private static ArrayList<Dupla> visitados;
+    private static HashMap<Dupla, Dupla> padres;
+    private static HashMap<Dupla, String> acciones;
+    private static int cantidadCuartos;
+    private static StringBuilder respuesta = new StringBuilder();
+    private static LinkedList<Integer>[] listaAdyacenciaPuertas;
+    private static LinkedList<Integer>[] listaAdyacenciaInterruptores;
+    
+
+    
+    public static Dupla BFS(int nodoInicial, int nodoFinal){ //A los nodos restarle uno porque array arranca en cero
+        visitados =  new ArrayList<Dupla>();
+        padres = new HashMap<Dupla, Dupla>();
+        acciones = new HashMap<Dupla, String>();
+        Queue<Dupla> cola = new ArrayDeque<Dupla>();
+
+        Boolean[] lucesInicio = inicializarArraysEnFalse(cantidadCuartos);
+        lucesInicio[0] = true;
+        Dupla inicio = new Dupla(nodoInicial, lucesInicio); 
+        cola.add(inicio);
+        while (!cola.isEmpty()) {
+            Dupla estadoActual = cola.poll();
+            visitados.add(estadoActual);            
+            if (esFinal(estadoActual, nodoFinal)) { //Si es estado objetivo -> sali
+                return estadoActual;
+            }
+            for (int i = 0 ; i < estadoActual.getEstadoLuces().length; i++){
+
+                if (estadoActual.getEstadoLuces()[i] == true && listaAdyacenciaPuertas[estadoActual.getNumeroHabitacion()].contains(i) && i != estadoActual.getNumeroHabitacion()) {//Luz prendida y hay puerta
+                    Boolean[] nuevoEstadoLuces = estadoActual.getEstadoLuces().clone();
+                    Dupla transicion = new Dupla(i, nuevoEstadoLuces);
+                    if (!cola.contains(transicion) && !visitados.contains(transicion)) {
+                        cola.add(transicion);
+                        padres.put(transicion, estadoActual);
+                        acciones.put(transicion, "- Move to room " + (i + 1)+".");
+                    }
+                }
+                
+                
+            }
+            for (int i = 0 ; i < estadoActual.getEstadoLuces().length; i++){
+                if (estadoActual.getEstadoLuces()[i] == true && i != estadoActual.getNumeroHabitacion() && listaAdyacenciaInterruptores[estadoActual.getNumeroHabitacion()].contains(i) ) {//Luz prendida, no es la actual, y la puedo apagar
+                    Boolean[] nuevoEstadoLuces = estadoActual.getEstadoLuces().clone();
+                    nuevoEstadoLuces[i] = false;
+                    Dupla transicion = new Dupla(estadoActual.getNumeroHabitacion(), nuevoEstadoLuces);
+                    if (!cola.contains(transicion) && !visitados.contains(transicion)) {
+                        cola.add(transicion);
+                        padres.put(transicion, estadoActual);
+                        acciones.put(transicion, "- Switch off light in room " + (i + 1)+".");
+
+                    }
+                }
+                if (estadoActual.getEstadoLuces()[i] == false && listaAdyacenciaInterruptores[estadoActual.getNumeroHabitacion()].contains(i)) {//Luz apagada y la puedo prender
+                    Boolean[] nuevoEstadoLuces = estadoActual.getEstadoLuces().clone();
+                    nuevoEstadoLuces[i] = true;
+                    Dupla transicion = new Dupla(estadoActual.getNumeroHabitacion(), nuevoEstadoLuces);
+                    if (!cola.contains(transicion) && !visitados.contains(transicion)) {
+                        cola.add(transicion);
+                        padres.put(transicion, estadoActual);
+                        acciones.put(transicion, "- Switch on light in room " + (i + 1)+"." );
+                    }
+                }
+            
+            }
+        }
+        return null;    
+    }   
+    //No uso vecinos precalculado sino que los voy obteniendo sobre la marcha. 
+    /* Recorro array booleanos de estado luces. Por cada luz/indice me pregunto: -Si está prendida la luz & hay puerta -> me muevo ahí && agrego ese estado nuevo a cola
+                                                                                 -Si no está prendida la luz y la puedo prender -> la prendo && agrego ese estado nuevo a cola
+                                                                                 -Si puedo apagar una luz desde está posición -> la apago && agrego ese estado nuevo a cola
+    */
+    private static boolean esFinal(Dupla estadoActual, int dormitorio) {
+        // TODO Auto-generated method stub
+        Boolean res = true;
+        if (estadoActual.getNumeroHabitacion() == dormitorio){
+            for (int i = 0; i < estadoActual.getEstadoLuces().length - 1; i++) {
+                res &= !estadoActual.getEstadoLuces()[i];
+            }
+        }
+        else{
+            res = false;
+        }
+        return res;
+    }
+    public static void procesarEntrada() throws IOException{
+        // System.setIn(new FileInputStream("test.txt")); 
+        // PrintStream salida = new PrintStream(new FileOutputStream("results.txt"));
+        // System.setOut(salida);
+        BufferedReader scan = new BufferedReader(new InputStreamReader(System.in));
+
+
+        String lineaActual = scan.readLine();
+        int test = 1;
+        while (lineaActual.compareTo("0 0 0")  != 0) {
+            String[] entrada = lineaActual.split(" ");
+            cantidadCuartos = Integer.valueOf(entrada[0]);
+            int cantidadInterruptores = Integer.valueOf(entrada[2]);
+            int cantidadPuertas = Integer.valueOf(entrada[1]);
+            listaAdyacenciaPuertas = inicializarListaAdyacencia(cantidadCuartos);
+            listaAdyacenciaInterruptores = inicializarListaAdyacencia(cantidadCuartos);
+            for (int index = 0; index < cantidadPuertas; index++) {
+                String[] dataNodo = scan.readLine().split(" ");
+                listaAdyacenciaPuertas[Integer.parseInt(dataNodo[0]) - 1].add(Integer.parseInt(dataNodo[1]) - 1);
+                listaAdyacenciaPuertas[Integer.parseInt(dataNodo[1]) - 1].add(Integer.parseInt(dataNodo[0]) - 1);
+                //Genero lista para saber de que cuarto puedo ir a cual y así tener esa información para cuando modele grafo    
+            }
+            for (int index = 0; index < cantidadInterruptores; index++) {
+                String[] dataInterruptores = scan.readLine().split(" ");
+                listaAdyacenciaInterruptores[Integer.parseInt(dataInterruptores[0]) - 1].add(Integer.parseInt(dataInterruptores[1]) - 1);
+                //Al primero le digo que puede apagar/prender el segundo, siendo primero y segundo el orden en input
+            }
+            //Genero lista para saber desde este cuarto que luz prende de cual cuarto
+            //Si en vez de armar todo grafo lo intento con lo que tengo
+
+
+
+            //Tengo que agregar los vecinos para cada estado. Si hay puerta y lo agrego como vecino. Genero todas sus variantes que son tantas como luces pueda prender/apagar desde ahi y si hay alguna prendida moverse a esa habitacion con luces en mismo estado sin alterarlo
+                
+            
+            respuesta.append("Villa #" + test + "\n");
+            Dupla res = BFS(0, cantidadCuartos - 1);
+            if (res == null) {
+                respuesta.append("The problem cannot be solved." + "\n");
+            }
+            else{
+                
+                generarTexto(reconstruirRecorrido(respuesta, res));
+            } 
+            System.out.println(respuesta);
+            respuesta = null;
+            respuesta = new StringBuilder();
+            test++;
+            scan.readLine();
+            lineaActual = scan.readLine();   
+        }
+        scan.close();
+    }
+
+
+
+    private static void generarTexto(ArrayList<Dupla> reconstruirRecorrido) {
+        // TODO Auto-generated method stub
+        for (int i = reconstruirRecorrido.size() - 1; i >= 0; i--) {
+            respuesta.append(acciones.get(reconstruirRecorrido.get(i)) + "\n");
+        }
+
+
+
+    }
+    private static ArrayList<Dupla> reconstruirRecorrido(StringBuilder respuesta, Dupla res) {
+        // TODO Auto-generated method stub
+        Boolean[] lucesFinal = inicializarArraysEnFalse(cantidadCuartos);
+        lucesFinal[0] = true;
+        Dupla inicio = new Dupla(0, lucesFinal); 
+        int pasos = 0;
+        Dupla camino = res;
+        ArrayList<Dupla> colaRecorrido = new ArrayList<>();
+        while (!camino.equals(inicio)) {
+            colaRecorrido.add(camino);
+            camino = padres.get(camino);
+            pasos++;
+        }
+        respuesta.append("The problem can be solved in " + pasos + " steps:\n");
+        return colaRecorrido;
+
+    }
+    private static LinkedList[] inicializarListaAdyacencia(int longitud) {
+        // TODO Auto-generated method stub
+        LinkedList<Integer>[] res = new LinkedList[longitud];   
+        for (int index = 0; index < longitud; index++) {
+            res[index] = new LinkedList<Integer>();
+        } 
+        return res;
+    }
+
+    public static void main(String[] args) throws IOException {
+        procesarEntrada();
+    }
+    private static Boolean[] inicializarArraysEnFalse(int longitud) {
+        // TODO Auto-generated method stub
+        Boolean[] res = new Boolean[longitud];
+        for (int i = 0; i < longitud; i++) {
+            res[i] = false;
+        }
+        return res;
+    }
+}
+/**
+ *  Dupla
+ */
+class  Dupla {
+    private int numeroHabitacion; 
+    private Boolean[] estadoLuces;
+
+   
+    public Dupla(int nodoInicial, Boolean[] lucesInicio) {
+        //TODO Auto-generated constructor stub
+        numeroHabitacion = nodoInicial;
+        estadoLuces = lucesInicio;
+    }
+
+    public int getNumeroHabitacion() {
+        return numeroHabitacion;
+    }
+
+    public void setNumeroHabitacion(int numeroHabitacion) {
+        this.numeroHabitacion = numeroHabitacion;
+    }
+
+    public Boolean[] getEstadoLuces() {
+        return estadoLuces;
+    }
+
+    public void setEstadoLuces(Boolean[] estadoLuces) {
+        this.estadoLuces = estadoLuces;
+    }
+
+    @Override
+    public String toString() {
+        return "Dupla [numeroHabitacion=" + numeroHabitacion + ", estadoLuces=" + Arrays.toString(estadoLuces);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + numeroHabitacion;
+        result = prime * result + Arrays.hashCode(estadoLuces);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Dupla other = (Dupla) obj;
+        if (numeroHabitacion != other.numeroHabitacion)
+            return false;
+        if (!Arrays.equals(estadoLuces, other.estadoLuces))
+            return false;
+        return true;
+    }
+
+    
+}
+
+class Tripla{   
+    private Dupla nodo;
+    private Dupla padre;
+
+   
+    public Tripla(Dupla transicion, Dupla estadoActual) {
+        //TODO Auto-generated constructor stub
+        nodo = transicion;
+        padre = estadoActual;
+    }
+    public Dupla getNodo() {
+        return nodo;
+    }
+    public void setNodo(Dupla nodo) {
+        this.nodo = nodo;
+    }
+    public Dupla getPadre() {
+        return padre;
+    }
+    public void setPadre(Dupla padre) {
+        this.padre = padre;
+    }
+    @Override
+    public String toString() {
+        return "Tripla [nodo=" + nodo + ", padre=" + padre + "]";
+    }
+
+
+
+
+}
