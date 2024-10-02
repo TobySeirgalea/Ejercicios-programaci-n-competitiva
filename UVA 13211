@@ -1,0 +1,103 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class Main {
+
+    private static int[][] matrizAdj;
+    private static int[] ordenDestruccion;
+    private static long  energiaNecesaria = 0;
+
+    public static void main(String[] args) throws NumberFormatException, IOException {
+        leerInput();
+    }
+
+    private static int[] reversa(int[] ordenDestruccion2) {
+        int[] inversa = new int[ordenDestruccion2.length];
+        for (int i = 0; i < inversa.length; i++) {
+            inversa[i] = ordenDestruccion2[ordenDestruccion2.length - 1 - i];
+        }
+        return inversa;
+    }
+
+    private static void leerInput() throws NumberFormatException, IOException {
+        // System.setIn(new FileInputStream("test.txt")); 
+        // PrintStream salida = new PrintStream(new FileOutputStream("results.txt"));
+        // System.setOut(salida);
+        
+        BufferedReader scaner = new BufferedReader(new InputStreamReader(System.in));
+        int cantidadTest = Integer.parseInt(scaner.readLine());
+        for (int test = 0; test < cantidadTest; test++) {
+            int cantidadTorres = Integer.parseInt(scaner.readLine());
+            matrizAdj = new int[cantidadTorres][cantidadTorres];
+            //Cada linea del input es una fila de la matriz. Es costo mensaje de torre actual a todas las demás
+            for (int torreNro = 0; torreNro < cantidadTorres; torreNro++) {
+                matrizAdj[torreNro] = toIntArray(scaner.readLine().split(" "));
+            }
+            //Acá ya salis con matriz armada
+            //Leo orden quiere destruir torres
+            ordenDestruccion = toIntArray(scaner.readLine().split(" "));
+            //Si el orden es distinto al dado por la matriz se complica todo
+            //Dantzig va agregando vertices al subgrafo -> la primera en ser eliminada es la ultima que quiero que se agregue al subgrafo .:. reverse
+            ordenDestruccion = reversa(ordenDestruccion);
+            reordenarMatriz(ordenDestruccion);
+            Dantzig(matrizAdj.length);
+            System.out.println(energiaNecesaria);
+            energiaNecesaria = 0;
+        }
+    }
+
+    private static void reordenarMatriz(int[] ordenDestruccion) {
+        int[][] matrizNueva = new int[matrizAdj.length][matrizAdj[0].length];
+        for (int i = 0; i < ordenDestruccion.length; i++) {
+            for (int j = 0; j < matrizNueva.length; j++) {
+                matrizNueva[i][j] = matrizAdj[ordenDestruccion[i]][ordenDestruccion[j]];  
+            }
+        }
+        matrizAdj = matrizNueva;
+        matrizNueva = null;
+    // [[1,2,3],[4,5,6],[7,8,9]]
+    }
+
+    private static int[] toIntArray(String[] split) {
+        int[] res = new int[split.length];
+        for (int i = 0; i < split.length; i++) {
+             res[i] =  Integer.parseInt(split[i]);
+        }
+        return res;
+    }
+//Algoritmo de Dantzig sacado de diapositivas de teorica y adaptado a arreglos indexados en 0 y no en 1
+    private static void Dantzig(int n){
+        Boolean hayCicloNegativo = false;
+        for (int k = 0; k < n-1; k++) {
+            for (int i = 0; i <= k; i++) {
+                for (int j = 0; j <= k; j++) {
+                    matrizAdj[i][k+1] = Math.min(matrizAdj[i][k+1], matrizAdj[i][j] + matrizAdj[j][k+1]);
+                    matrizAdj[k+1][i] = Math.min(matrizAdj[k+1][i], matrizAdj[k+1][j] + matrizAdj[j][i]);
+                }
+            }
+            int t = Integer.MAX_VALUE;;
+            for (int i = 0; i <= k; i++) {
+                t = Math.min(t, matrizAdj[k+1][i] + matrizAdj[i][k+1]);
+            }
+            if (t < 0) hayCicloNegativo = true;
+
+            for (int i = 0; i <= k; i++) {
+                for (int j = 0; j <= k; j++) {
+                    matrizAdj[i][j] = Math.min(matrizAdj[i][j], matrizAdj[i][k+1] + matrizAdj[k+1][j]);
+                }
+            }
+            //Ya habiendo finalizado calculo de matriz de subgrafo inducido por los primero k vertices podemos sumar y tener la suma de costo romper torre k
+            calcularSumaDistanciasDeMatriz(k+1);
+        }
+
+    }
+
+    private static void calcularSumaDistanciasDeMatriz(int k) {
+        for (int i = 0; i <= k; i++) {
+            for (int j = 0; j <= k; j++) {
+                energiaNecesaria += matrizAdj[i][j];
+            }
+        }    
+    }
+}
