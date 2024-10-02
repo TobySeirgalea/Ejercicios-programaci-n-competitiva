@@ -1,0 +1,201 @@
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.util.ArrayList;
+
+public class Main {
+/*Idea: Nodos -> Tengan int[] digitos, Nodo padre, int distParcial
+Me paro en [0,0,0,0] por cada vecino  
+ *
+ * 
+ */
+    private static ArrayList<Nodo> listaClaves;
+    private static Boolean[] usados;
+    private static int[] min_distancia;
+    private static int[][] adjMatrix;
+    private static int[] padre;
+    private static StringBuilder respuesta;
+
+
+
+    public static void main(String[] args) throws IOException {
+        // System.setIn(new FileInputStream("test.txt")); 
+        // PrintStream salida = new PrintStream(new FileOutputStream("results.txt"));
+        // System.setOut(salida);
+        BufferedReader scaner = new BufferedReader(new InputStreamReader(System.in));
+        int cantidadTest = Integer.parseInt(scaner.readLine());
+        respuesta = new StringBuilder();
+        for (int i = 0; i < cantidadTest; i++) {
+            String[] dataTest = scaner.readLine().split(" ");
+            int cantidadClaves = Integer.parseInt(dataTest[0]);
+            inicializarMatriz(cantidadClaves);
+            inicializarArrays(cantidadClaves);
+            padre = new int[cantidadClaves + 1];
+            listaClaves = new ArrayList<Nodo>();
+            // int[] zero = {0,0,0,0};
+            // listaClaves.add(new Nodo(zero, 0));
+            for (int j = 0; j < cantidadClaves; j++) {
+                int[] digitos = new int[4];
+                int[] data = toIntArray(dataTest[j + 1]);
+                for (int k = 0; k < 4; k++) {
+                    digitos[k] = data[k];
+                }
+                Nodo clave = new Nodo(digitos, j);
+                listaClaves.add(clave);
+            }
+            completarMatriz(); //O(n^2)
+            PrimAlCuadrado();
+            if (i < cantidadTest - 1) {
+                respuesta.append("\n");   
+            }
+        }
+        System.out.println(respuesta);
+        scaner.close();
+    }
+    
+
+
+    private static void inicializarArrays(int i) {
+        usados = new Boolean[i];
+        for (int index = 0; index < i; index++) {
+            usados[index] = false;
+        }
+    }
+
+
+
+    private static void inicializarMatriz(int dimensiones) {
+        adjMatrix = new int[dimensiones][dimensiones];
+        min_distancia = new int[dimensiones];
+        for (int i = 0; i < adjMatrix.length; i++) {
+            for (int j = 0; j < adjMatrix[0].length; j++) {
+                adjMatrix[i][j] = Integer.MAX_VALUE;
+            }
+            min_distancia[i] = Integer.MAX_VALUE;
+        }
+    }
+
+
+
+    private static void completarMatriz() {
+        for (Nodo clave : listaClaves) {
+            for (Nodo clave1 : listaClaves) {
+                if (!clave.equals(clave1)) {
+                    int dist = distancia(clave.getDigitos(), clave1.getDigitos());
+                    adjMatrix[clave.getID()][clave1.getID()] = dist;
+                    adjMatrix[clave1.getID()][clave.getID()] = dist;        
+                }
+            }
+        }    
+    }
+
+
+
+    public static void PrimAlCuadrado(){
+        int[] zero = {0,0,0,0};
+        int menor = Integer.MAX_VALUE;
+        int indice = -1;
+        for (int i = 0; i < min_distancia.length; i++) {
+            int distActual = distancia(listaClaves.get(i).getDigitos() , zero); 
+            if (distActual < menor){
+                menor = distActual;
+                indice = i;
+            }
+        }
+        padre[indice] = -1;
+        min_distancia[indice] = 0;
+        for (int i = 0; i < adjMatrix.length - 1; i++) {
+            //i es vertice a revisar
+            int actual = menorDistancia();
+            usados[actual] = true;
+
+
+            for (int j = 0; j < adjMatrix[0].length; j++) {
+                //j son sus vecinos
+                if (adjMatrix[actual][j] != 0 && usados[j] ==  false && adjMatrix[actual][j] < min_distancia[j]) {
+                    padre[j] = actual;
+                    min_distancia[j] = adjMatrix[actual][j];
+                }
+            }
+            //Si alguno de tus vecinos le significas un camino de menor costo, entonces ponete como conexión entre ustedes 
+            
+        }
+        //Terminas recorrido de todos los nodos.
+        int cantidadMovimientos = menor;
+        for (int i = 0; i < min_distancia.length; i++) {
+            if (i != indice){cantidadMovimientos += min_distancia[i];}
+        }
+        respuesta.append(cantidadMovimientos);
+    }
+
+    private static int menorDistancia() {
+        int menor = Integer.MAX_VALUE;
+        int nodoActualIndice = -1;
+        for (int i = 0; i < min_distancia.length; i++) {
+            if (usados[i] == false && min_distancia[i] < menor) {
+                menor = min_distancia[i];
+                nodoActualIndice = i;
+            }
+        }
+        return nodoActualIndice;    
+    }
+
+
+
+    private static int[] toIntArray(String string) {
+        int [] res = new int[4];
+        for (int i = 0; i < string.length() - 1; i++) {
+            res[i] = Integer.parseInt(string.substring(i, i+1));
+        }    
+        res[string.length() - 1] = Integer.parseInt(string.substring(string.length()-1));
+        return res;
+    }
+
+
+
+    private static int distancia(int[] key1, int[] key2) {
+        int dist = 0;    
+        for (int k = 0; k < 4; k++) {
+                int subir = ((key1[k] - key2[k]) % 10) < 0 ? ((key1[k] - key2[k]) % 10) + 10 : ((key1[k] - key2[k]) % 10);
+                int bajar = ((key2[k] - key1[k]) % 10) < 0 ? ((key2[k] - key1[k]) % 10) + 10 : ((key2[k] - key1[k]) % 10); 
+                dist += Math.min(subir, bajar);   
+            }
+        return dist;
+    }
+
+
+
+
+
+
+
+
+
+}
+
+
+class Nodo{
+    private int[] digitos;
+    private int ID;
+    public int[] getDigitos() {
+        return digitos;
+    }
+    public void setDigitos(int[] digitos) {
+        this.digitos = digitos;
+    }
+    public int getID() {
+        return ID;
+    }
+    public void setID(int iD) {
+        ID = iD;
+    }
+    public Nodo(int[] digitos, int iD) {
+        this.digitos = digitos;
+        ID = iD;
+    }
+
+    
+}
