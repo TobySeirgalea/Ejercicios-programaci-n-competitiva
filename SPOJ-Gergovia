@@ -1,0 +1,50 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+public class Main {
+    private static long[] cuadra;
+    private static long[] vinoDisponibleEnPasoi;
+
+    public static void procesarEntrada() throws IOException{
+        BufferedReader scan = new BufferedReader(new InputStreamReader(System.in));
+        StringBuilder respuestaFinal = new StringBuilder();
+        long res = 0;
+        while (Integer.parseInt(scan.readLine()) != 0) {
+            String[] dataTest = scan.readLine().split(" ");
+            cuadra = convertirAArray(dataTest);
+            vinoDisponibleEnPasoi = new long[cuadra.length];
+            res = calcularMinimo();
+            respuestaFinal.append(res +"\n");
+        }
+        System.out.println(respuestaFinal);
+    }
+
+    private static long calcularMinimo() {
+        vinoDisponibleEnPasoi[0] = cuadra[0];
+        for (int i = 1; i < cuadra.length; i++) {
+            vinoDisponibleEnPasoi[i] = vinoDisponibleEnPasoi[i-1] + cuadra[i];
+        }
+        return sum(vinoDisponibleEnPasoi);
+    }
+
+    private static long sum(long[] vinoDisponibleEnPasoi2) {
+        long suma = 0;
+        for (int i = 0; i < vinoDisponibleEnPasoi2.length; i++) {
+            suma += Math.abs(vinoDisponibleEnPasoi2[i]);
+        }
+        return suma;
+    }
+
+    private static long[] convertirAArray(String[] dataTest) {
+        long[] array = new long[dataTest.length];
+        for (int i = 0; i < dataTest.length; i++) {
+            array[i] = Integer.valueOf(dataTest[i]);
+        }
+        return array;
+    }
+
+    public static void main(String[] args) throws IOException {
+        procesarEntrada();
+    }
+}
