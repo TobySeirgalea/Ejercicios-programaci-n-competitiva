@@ -1,0 +1,110 @@
+#include <iostream>
+#include <vector>
+#include <tuple>
+#include <sstream>
+#include <queue>
+#include <climits>
+#define INF INT_MAX
+
+int main(){
+    int cantidadAscensores, pisoObjetivo;
+    while (std::cin >> cantidadAscensores >> pisoObjetivo){
+        std::vector<int> velocidades;
+        std::vector<int> paradasPorAscensor[cantidadAscensores]; //así lo inicializamos con false
+        int velocidad;
+        for (int i = 0; i < cantidadAscensores; i++){
+            std::cin >> velocidad;
+            velocidades.push_back(velocidad);
+        }
+        std::cin.ignore();
+        for (int i = 0; i < cantidadAscensores; i++){
+            std::string lineaParadas;
+            std::getline(std::cin, lineaParadas);
+            std::istringstream s(lineaParadas);
+            int piso;
+            int count = 0;
+            while (s >> piso){
+               paradasPorAscensor[i].push_back(piso);
+            }        
+        }
+        //Arma grafo           ascensor                piso  lista vecinos<ascensor, piso>
+        std::vector<std::tuple<int,int,int>> adj[cantidadAscensores + 1][100];
+        //ascensor, piso, peso
+        //Conecto todos los primeras paradas al fantasma   FUNCIONA
+        for (int i = 0; i < cantidadAscensores; i++){
+            if (paradasPorAscensor[i][0] == 0){ //Ver primer elemento, si es cero lo conecto al fantasma
+                adj[i + 1 ][0].push_back(std::tuple<int, int, int>(0,0,0));
+                adj[0][0].push_back(std::tuple<int, int, int>(i + 1, 0, 0));
+            }
+        }
+        //Conecto todos los de mismo elevador
+        for (int i = 0; i < cantidadAscensores; i++){
+            int pisoActual;
+            int pisoSiguiente;
+            for (int j = 0; j < paradasPorAscensor[i].size() - 1; j++){        
+                pisoActual = paradasPorAscensor[i][j];
+                pisoSiguiente = paradasPorAscensor[i][j + 1];
+                int peso = (pisoSiguiente - pisoActual) * velocidades[i];
+                adj[i + 1][pisoActual].push_back(std::tuple<int, int, int>(i + 1, pisoSiguiente, peso));
+                adj[i + 1][pisoSiguiente].push_back(std::tuple<int, int, int>(i + 1, pisoActual, peso));        
+            }
+        }
+    
+        //Conecto todos los del mismo piso pero distinto elevador
+        for (int ascensor = 0; ascensor < cantidadAscensores; ascensor++){
+            for (int piso = 0; piso < paradasPorAscensor[ascensor].size(); piso++){        
+                int pisoActual = paradasPorAscensor[ascensor][piso];
+                for (int vecino = 0; vecino < cantidadAscensores; vecino++){
+                    if (pisoActual != 0 && vecino != ascensor && adj[vecino+1][pisoActual].size() != 0){
+                        adj[vecino+1][pisoActual].push_back(std::tuple<int, int, int>(ascensor+1, pisoActual, 60));
+                        adj[ascensor+1][pisoActual].push_back(std::tuple<int, int, int>(vecino+1, pisoActual, 60));
+                    }
+                    else if (pisoActual == 0 && vecino != ascensor && adj[vecino+1][pisoActual].size() != 0){
+                        adj[vecino+1][pisoActual].push_back(std::tuple<int, int, int>(ascensor+1, pisoActual, 0));
+                        adj[ascensor+1][pisoActual].push_back(std::tuple<int, int, int>(vecino+1, pisoActual, 0));
+                    }
+                }
+            }
+        }
+
+        //Dijkstra
+        std::priority_queue<std::vector<int>> heap; //meto {ascensor, piso, peso} en pq
+        int distancia[cantidadAscensores + 1][100];
+        for (int i = 0; i < cantidadAscensores +1; i++){
+            for (int j = 0; j < 100; j++){
+                distancia[i][j] = INF;
+            }
+
+        }
+        bool procesados[cantidadAscensores + 1][100] = {0};
+        distancia[0][0] = 0;
+        heap.push({0,0,0});
+        while (!heap.empty()){
+            int piso = heap.top()[2];
+            int ascensor = heap.top()[1];
+            heap.pop();
+            if(procesados[ascensor][piso] == true) continue;
+            procesados[ascensor][piso] = true;
+            for (auto u : adj[ascensor][piso]) {
+                int pisoVecino = std::get<1>(u), ascensorVecino = std::get<0>(u), peso = std::get<2>(u);
+                if (distancia[ascensor][piso] + peso < distancia[ascensorVecino][pisoVecino]) {
+                    distancia[ascensorVecino][pisoVecino] = distancia[ascensor][piso] + peso;
+                    heap.push({-distancia[ascensorVecino][pisoVecino], ascensorVecino, pisoVecino});
+                }
+            }
+        }
+        //Error es que no actualiza las mejoras en los otros. Ver cuando marca al 30 del 1er ascensr como visitado
+        //Me quedo con el de menor distancia de ese piso de todos los ascensores
+        int mejor = INF;
+        for (int i = 1; i < cantidadAscensores + 1; i++) {
+            mejor = std::min(distancia[i][pisoObjetivo], mejor);
+        }
+        if (mejor == INF){ 
+            std::cout << "IMPOSSIBLE"<<"\n";
+        }
+        else{
+        std::cout << mejor << "\n";
+        }
+   }
+    return 0;
+}
