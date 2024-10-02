@@ -1,0 +1,84 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Scanner;
+
+public class Main {
+    public static int numeroDeTest;
+    public static ArrayList<String> jugadores = new ArrayList<String>();
+    public static ArrayList<String[]> jugadorData = new ArrayList<String[]>();
+    
+    
+    public static void obtenerEntrada(){
+        
+            Scanner escaner = new Scanner(System.in);
+            numeroDeTest = escaner.nextInt();
+            escaner.nextLine();
+        for(int j = 1; j <= numeroDeTest; j++) {            
+            for (int i = 1; i < 11; i++){
+                jugadores.add(escaner.nextLine());
+            }
+            for (int i = 0; i < jugadores.size(); i++){
+                String[] Data = jugadores.get(i).split(" ");
+                jugadorData.add(Data);
+            }
+            backtracking(jugadorData);
+            generarEquipo(j);
+            jugadorData.clear();
+            jugadores.clear();
+            ataque.clear();
+            defensa.clear();
+        }
+        escaner.close();
+    }
+        //Ahora tengo arraylist de arrays de string donde el primero es el nombre, el 2do el ataque y el 3ro la defensa
+    public static ArrayList<String> ataque = new ArrayList<String>();
+    public static ArrayList<String> defensa = new ArrayList<String>();
+    public static void backtracking(ArrayList<String[]> jugadorData){
+        for (int k = 0; k < 5; k++){
+            String[] maximoAtaqueActual = jugadorData.get(0);
+            for (int i = 0; i < jugadorData.size(); i++){
+                if(Integer.valueOf(maximoAtaqueActual[1]) < Integer.valueOf(jugadorData.get(i)[1])){
+                    maximoAtaqueActual = jugadorData.get(i);
+                }
+                else if (Integer.valueOf(maximoAtaqueActual[1]) == Integer.valueOf(jugadorData.get(i)[1])){//Si son iguales entonces quedate con el de menor valor de defensa
+                    if(Integer.valueOf(maximoAtaqueActual[2]) > Integer.valueOf(jugadorData.get(i)[2])){
+                        maximoAtaqueActual = jugadorData.get(i);
+                    }
+                    else if (Integer.valueOf(maximoAtaqueActual[2]) == Integer.valueOf(jugadorData.get(i)[2])){//Si son iguales
+                        maximoAtaqueActual = (maximoAtaqueActual[0].compareTo(jugadorData.get(i)[0]) < 0) ? maximoAtaqueActual : jugadorData.get(i); 
+                        }
+                    }
+                }
+            ataque.add(maximoAtaqueActual[0]);
+            jugadorData.remove(maximoAtaqueActual); 
+        }
+        for (int i = 0; i < 5; i++){
+            defensa.add(jugadorData.get(i)[0]);
+        }
+    }
+    public static void generarEquipo(int numeroDeTestLocal){
+        String respuesta = "Case " + numeroDeTestLocal+":\n";
+        Collections.sort(ataque);
+        Collections.sort(defensa);
+        String ataqueFormacion = "(" + ataque.get(0);
+        for (int i = 1; i < ataque.size();i++){
+            ataqueFormacion += ", " + ataque.get(i);
+        }
+        ataqueFormacion += ")\n";
+        String defensaFormacion = "(" + defensa.get(0);
+        for (int i = 1; i < defensa.size();i++){
+            defensaFormacion += ", " + defensa.get(i);
+        }
+        defensaFormacion += ")";
+        respuesta += ataqueFormacion + defensaFormacion; 
+        System.out.println(respuesta);
+        
+    }
+  
+    
+    
+    public static void main(String[] args) {
+        obtenerEntrada();
+        
+    }
+}
