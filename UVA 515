@@ -1,0 +1,101 @@
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.util.ArrayList;
+
+public class Main {
+    private static ArrayList<Arista> listaAristas;
+    private static StringBuilder respuesta;
+
+    public static void main(String[] args) throws NumberFormatException, IOException {
+        
+        BufferedReader scaner = new BufferedReader(new InputStreamReader(System.in));
+        respuesta = new StringBuilder();
+        String primerLinea = scaner.readLine();
+        while (!primerLinea.contentEquals("0")) {
+            int[] dataTest = toIntArray(primerLinea.split(" "));
+            int longitudSecuencias = dataTest[0];
+            int cantidadSecuencias = dataTest[1];
+            listaAristas = new ArrayList<Arista>();
+            for (int i = 0; i < 100; i++) {
+                listaAristas.add(new Arista(0,i,0));
+            }
+            
+            for (int i = 0; i < cantidadSecuencias; i++) {
+                String[] ecuacion = scaner.readLine().split(" ");
+                    int a =Integer.parseInt(ecuacion[0]); int b =Integer.parseInt(ecuacion[1]); int c =Integer.parseInt(ecuacion[3]);
+
+                    if (ecuacion[2].compareTo("gt") == 0){
+                        listaAristas.add(new Arista(a+b+1, a, -c-1));
+                    }
+                    else if (ecuacion[2].compareTo("lt") == 0){
+                        listaAristas.add(new Arista(a, a+b+1, c-1));
+                    }
+                }
+
+                respuesta.append(bellmanFord()+"\n");
+                primerLinea = scaner.readLine();
+            }
+            System.out.print(respuesta);
+            scaner.close();
+        }
+
+    private static String bellmanFord() {
+        int[] distance = new int[200];
+        int[] padre = new int[200];
+        for (int i = 0; i < 200; i++) distance[i] = 0;
+        distance[0] = 0;
+        for (int i = 1; i < 199; i++) {
+            for (Arista arista : listaAristas) {
+                if (distance[arista.getSrc()] + arista.getPeso() < distance[arista.getDestino()]) {
+                    distance[arista.getDestino()] = distance[arista.getSrc()] + arista.getPeso();
+                    padre[arista.getDestino()] = arista.getSrc();
+                }
+            }
+        }
+        for (Arista arista : listaAristas) {
+            if (distance[arista.getSrc()] != Integer.MAX_VALUE && distance[arista.getSrc()] + arista.getPeso() < distance[arista.getDestino()]) {
+                return "successful conspiracy";
+            }
+        }
+        return "lamentable kingdom";
+    }    
+
+    private static int[] toIntArray(String[] split) {
+        int[] res = new int[split.length];
+        for (int i = 0; i < split.length; i++) {
+            res[i] = Integer.parseInt(split[i]);
+        }
+        return res;    
+    }
+}
+
+class Arista implements Comparable<Arista> {
+    int src, dest;
+    int peso;
+    
+    public Arista(int s, int d, int w) {
+        this.src=s;
+        this.dest=d;
+        this.peso=w;
+    }
+    
+    public int getSrc() {
+        return src;
+    }
+
+    public int getDestino() {
+        return dest;
+    }
+
+    public int getPeso() {
+        return peso;
+    }
+
+    public int compareTo(Arista e) { 
+        return this.peso-e.peso; 
+    }
+}
