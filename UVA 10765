@@ -1,0 +1,175 @@
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+    
+public class Main{
+    
+    
+        private static ArrayList<tupla> palomasQueNecesitoSiBombardeoEstacionI;
+        private static int cantidadBombas;
+        private static int[] disc;
+        private static int[] low; 
+        private static int[] padre;
+        private static int time = 0;
+        private static Boolean[] visitados;
+        private static int[] hijos;
+        private static LinkedList<Integer>[] adjList;
+        private static StringBuilder respuesta = new StringBuilder();
+        private static ArrayList<Integer> AP;
+    
+
+
+    
+        // public static void opcionesABombardear(){
+        //     for (int i = 0; i < adjList.length; i++) {
+        //         palomasQueNecesitoSiBombardeoEstacionI.add(new tupla(i, DFS(adjList, i)));
+        //     }
+        //     comparadorTuplas porSnd = new comparadorTuplas();
+        //     Collections.sort(palomasQueNecesitoSiBombardeoEstacionI, porSnd);
+        //     for (int i = 0; i < cantidadBombas; i++) {
+        //         respuesta.append(palomasQueNecesitoSiBombardeoEstacionI.get(i).toString() + "\n");
+        //     }
+        // }
+
+
+
+
+
+    
+    //Falta hacer para que te de todo en orden que piden.
+    
+    
+    
+        private static int DFSAP(int nodoActual, int previo){
+            low[nodoActual] = ++time;
+            disc[nodoActual] = time;
+            for (Integer nodo : adjList[nodoActual]) {
+                if (nodo == previo){
+                    continue;
+                }
+                if(disc[nodo] == -1){
+                    hijos[nodoActual] += 1;
+                    padre[nodo] = nodoActual;
+                    DFSAP(nodo, nodoActual);
+                    if (disc[nodoActual] <= low[nodo] && padre[nodoActual] != -1){
+                        AP.set(nodoActual, AP.get(nodoActual) + 1);        
+                    }
+                low[nodoActual] = Math.min(low[nodoActual], low[nodo]);
+                }
+                else{
+                    low[nodoActual] = Math.min(low[nodoActual], disc[nodo]);
+                }
+            }
+        return hijos[nodoActual];
+    }
+
+        private static void DFS(LinkedList[] adjList){
+            for (int i = 0; i < adjList.length; i++){
+                if (disc[i] == -1){
+                    int comp = DFSAP(i, i) - 1;
+                    if (comp > 0) {
+                        AP.set(i, comp);
+                    }
+                        
+                }
+            }
+            ArrayList<tupla> piggeonValue = new ArrayList<tupla>();
+            for (int i = 0; i < AP.size(); i++) {
+                piggeonValue.add(new tupla(i, AP.get(i) + 1));
+            }
+            ComparadorTuplas comparadorPorSnd = new ComparadorTuplas();
+            piggeonValue.sort(comparadorPorSnd);
+            for (int i = 0; i < cantidadBombas; i++) {
+                respuesta.append(piggeonValue.get(i).toString() + "\n");
+            }
+        }  
+        public static void procesarEntrada() throws IOException{
+            // System.setIn(new FileInputStream("test.txt")); 
+            // PrintStream salida = new PrintStream(new FileOutputStream("results.txt"));
+            // System.setOut(salida);
+            BufferedReader scan = new BufferedReader(new InputStreamReader(System.in));
+                String[] entrada = scan.readLine().split(" ");
+                while (Integer.valueOf(entrada[0]) != 0 && Integer.valueOf(entrada[1]) != 0) {
+                    int nroEstaciones = Integer.valueOf(entrada[0]);
+                    cantidadBombas = Integer.valueOf(entrada[1]);
+                    inicializarArraysData(nroEstaciones);
+                    while (Integer.parseInt(entrada[0]) != -1 && Integer.parseInt(entrada[1]) != -1) {
+                        entrada = scan.readLine().split(" ");
+                        if (Integer.parseInt(entrada[0]) != -1 && Integer.parseInt(entrada[1]) != -1){
+                            adjList[Integer.parseInt(entrada[0])].add(Integer.parseInt(entrada[1]));
+                            adjList[Integer.parseInt(entrada[1])].add(Integer.parseInt(entrada[0]));
+                        }     
+                    }
+                   // }
+                    entrada = scan.readLine().split(" ");
+                    //Llamada a programa va acá
+                    DFS(adjList);
+                    System.out.println(respuesta);
+                    respuesta.delete(0, respuesta.length());
+                }        
+                scan.close();
+            }
+
+        private static void inicializarArraysData(int nroEstaciones) {
+            disc = new int[nroEstaciones];
+            low = new int[nroEstaciones]; 
+            padre = new int[nroEstaciones];
+            visitados = new Boolean[nroEstaciones] ;
+            hijos = new int[nroEstaciones];
+            adjList =  new LinkedList[nroEstaciones];
+            AP = new ArrayList<Integer>(nroEstaciones);
+            for (int i = 0; i < nroEstaciones; i++) {
+                adjList[i] = new LinkedList<>();
+                visitados[i] = false;
+                disc[i] = -1;
+                padre[i] = -1;
+                AP.add(0);
+            }
+
+
+        }
+
+        public static void main(String[] args) throws IOException {
+            procesarEntrada();
+        }
+    
+    }
+class tupla{
+        private int fst;
+        private int snd;
+        public tupla(int fst, int snd){
+            this.fst = fst;
+            this.snd = snd;
+        }
+        public int getFst() {
+            return fst;
+        }
+        public int getSnd() {
+            return snd;
+        }
+        @Override
+        public String toString() {
+            return fst + " " + snd;
+        }
+        public void setFst(int fst) {
+            this.fst = fst;
+        }
+        public void setSnd(int snd) {
+            this.snd = snd;
+        }
+}
+
+class ComparadorTuplas implements Comparator<tupla>{
+    @Override
+    public int compare(tupla o1, tupla o2) {
+        return Integer.compare(o2.getSnd(), o1.getSnd());
+        //Retorna -1 si o2 < o1, 0 si o2 == o1, 1 si o2 > o1
+    }
+}
