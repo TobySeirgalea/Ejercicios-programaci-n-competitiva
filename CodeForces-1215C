@@ -1,0 +1,116 @@
+    import java.io.BufferedReader;
+    import java.io.IOException;
+    import java.io.InputStreamReader;
+    import java.util.Stack;
+    
+    public class monocarp2 {
+        private static Stack<Integer> rotosConADeT;
+        private static Stack<Integer> rotosConBDeT;
+        private static char[] stringS;
+        private static char[] stringT;
+        private static StringBuilder respuestaA = new StringBuilder();
+        private static int cantidadSwaps = 0;
+    
+    
+        public static void procesarEntrada() throws IOException{
+            BufferedReader scan = new BufferedReader(new InputStreamReader(System.in));
+            scan.readLine();
+            stringS = scan.readLine().toCharArray();
+            stringT = scan.readLine().toCharArray();
+            preproceso();
+            realizarSwaps();
+            if (coinciden()){
+                System.out.println(cantidadSwaps + "\n" + respuestaA);
+            }
+            else{
+                System.out.println(-1);
+            }
+        }
+        
+       private static boolean coinciden() {
+        Boolean res = true;
+        for (int i = 0; i < stringS.length; i++) {
+            if (stringS[i] != stringT[i]){
+                res = false;
+                }
+            }    
+        return res;
+        }
+    
+        private static void realizarSwaps() { //Si se puede realiza swaps. Sino no hace nada    
+            for (int i = 0; i < stringS.length ; i++) {        
+                if (stringS[i] != stringT[i]){
+                    if (stringS[i] == 'a') {
+                        //Para no contarme a mi mismo
+                        if (rotosConBDeT.peek() == i){
+                            rotosConBDeT.pop();
+                        }
+                        //Si tengo una opcion para hacer el swap en 1 mov
+                        if(!rotosConBDeT.empty()){
+                            swapear(i, rotosConBDeT.pop());
+                        }
+                        //Si no puedo hacerlo en un mov, pero puedo hacerlo en dos
+                        else if (rotosConBDeT.empty() && !rotosConADeT.empty()){
+                            //Transformo de b/a a a/b
+                            swapear(rotosConADeT.peek(),rotosConADeT.peek());
+                            swapear(i, rotosConADeT.pop());
+                        }
+                    }
+                    else if (stringS[i] == 'b') {
+                            //Para no contarme a mi mismo
+                            if (rotosConADeT.peek() == i){
+                                rotosConADeT.pop();
+                            }
+                            //Si tengo una opcion para hacer el swap en 1 mov
+                            if(!rotosConADeT.empty()){
+                                swapear(i, rotosConADeT.pop());
+                            }
+                            //Si no puedo hacerlo en un mov, pero puedo hacerlo en dos
+                            else if (rotosConADeT.empty() && !rotosConBDeT.empty()){
+                                //Transformo de b/a a a/b
+                                swapear(rotosConBDeT.peek(),rotosConBDeT.peek());
+                                swapear(i, rotosConBDeT.pop());
+                            }
+                        }
+                }   
+            }
+        }
+
+
+
+
+
+        private static void swapear(int indiceS, int indiceT){
+            char copia = stringS[indiceS];
+            stringS[indiceS] = stringT[indiceT];
+            stringT[indiceT] = copia;
+            respuestaA.append((indiceS + 1) + " " + (indiceT + 1) + "\n");
+            cantidadSwaps++;
+        }
+    
+     private static void preproceso() {
+            rotosConADeT = new Stack<Integer>();
+            rotosConBDeT = new Stack<Integer>();
+            for (int i = stringS.length-1; i >= 0; i--) {
+                if (stringS[i] != stringT[i]) {
+                    if (stringT[i] == 'a') {
+                        rotosConADeT.push(i);
+                    }                
+                    else if(stringT[i] == 'b'){
+                        rotosConBDeT.push(i);
+                    }
+                }
+            }
+        }
+        public static void main(String[] args) throws IOException {
+            procesarEntrada();
+        }
+    }
+    
+
+
+
+
+
+    
+
